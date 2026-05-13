@@ -4,17 +4,18 @@ import random
 from logic import main
 from parsing import check_validation
 class Zones:
-    def __init__(self,name,row,col,max_link_capacity=float('inf')):
+    def __init__(self,name,row,col,max_link_capacity):
         self.name = name
         self.x = int(col) * 50 + 25
         self.y = int(row) * 50 + 25
         self.max_link_capacity = max_link_capacity
         self.current_drones = 0
 class Drones:
-    def __init__(self, speed,start_x, start_y,info,path,zones_dict):
+    def __init__(self, speed,start_x, start_y,info,path,zones_dict,connection_data):
         self.speed = speed 
         self.x = float(start_x)
         self.y = float(start_y)
+        self.connection_data = connection_data
         self.path = path
         self.info = info
         self.cap_zones = zones_dict
@@ -34,7 +35,19 @@ class Drones:
             if self.step + 1 < len(self.path):
                 current_z = self.cap_zones[self.path[self.step]]
                 next_z    = self.cap_zones[self.path[self.step + 1]]
-                if next_z.current_drones < next_z.max_link_capacity:
+
+                current_name = self.path[self.step]
+                next_name = self.path[self.step + 1]
+                if next_name == self.path[-1] or current_name == self.path[0]:
+                    link_cap = 999
+                else:
+                    link_cap = 1
+                    for neighbor in self.connection_data[current_name]:
+                        if neighbor[0] == next_name:
+                            link_cap = neighbor[1]
+                            break
+                # if next_z.current_drones < next_z.max_link_capacity:
+                if next_z.current_drones < link_cap:
                         current_z.current_drones -= 1
                         next_z.current_drones    += 1
 
@@ -86,11 +99,9 @@ def func():
     zones = {}
     for name,data in info.items():
         x, y = data["position"]
-        max_drones = data.get("max_drones",float('inf'))
-        try:
-            max_cap = float(max_drones)
-        except:
-            max_cap = float('inf')
+        max_drones = data.get("max_drones",1)
+        # print(name,max_drones)
+        max_cap = max_drones
         if name == path[0] or name == path[-1]:
             max_cap = float('inf')
         zones[name] = Zones(name,x,y,max_cap)
@@ -100,8 +111,7 @@ def func():
     all_drones = []
     for inde_x in range(nb_drones):
         speed = random.uniform(1.0, 2.5)
-        d = Drones(speed, drone_x + (inde_x * 10), drone_y, info, path,zones)
-        # d.id = inde_x
+        d = Drones(speed, drone_x + (inde_x * 10), drone_y, info, path,zones,connection)
         all_drones.append(d)
 
     running = True
