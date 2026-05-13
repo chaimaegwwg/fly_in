@@ -66,13 +66,27 @@ def make_a_dictionary():
     dic = {}
     check_prefix = 0
     with open("configuration.txt", "r") as file:
+  
         lines = file.readlines()
+
         for line in lines:
             line = line.split('#')[0].strip()
+
+
             if not line or ":" not in line:
                 if ":" not in line and line:
                     print("Enter key correctly")
                     sys.exit()
+
+
+            if not line:
+                continue
+            if ":" not in line:
+                print("Enter key correctly")
+                sys.exit()
+                # if ":" not in line and line:
+                #     print("yes")
+
             key , value= line.split(":", 1)
             key = key.lower().strip()
             #prefix    
@@ -91,16 +105,16 @@ def make_a_dictionary():
     return dic
 def check_connection(connection, names):
     dic = {}
-    # n = 0
     try:
         for x in connection:
             x = x.strip().split("-")
             x[0] = x[0].strip()
+            x[1] = x[1].strip()
             if x[0] not in names:
                 raise ValueError("Invalid name")
             if x[1] not in names:
                 if "[" not in x[1] and "]" not in x[1]:
-                    raise ValueError("Entre the [ ]")
+                    raise ValueError(f"Entre the [ ] or {x[1]} not here")
                 c = x[1].count("]")
                 c1 = x[1].count("[")
                 if c1 != 1 or c != 1:
@@ -119,19 +133,37 @@ def check_connection(connection, names):
                 v = int(value_max)
                 if v < 0:
                     raise ValueError("the value must be up than 0 (max_link_capacity)")
-                second_name = x[1].split("[")
-                x[1] = second_name[0].strip()
-                if x[1] not in names:
+                second_name = x[1].split("[")[0].strip()
+                if second_name not in names:
                     raise ValueError("invalid second name")
-                # dic[x[0]] = [x[1],v]
-                dic.setdefault(x[0],[]).append([x[1],v])
-                dic.setdefault(x[1],[]).append([x[0],v])
+
+                dic.setdefault(x[0], []).append([second_name, v])
+                dic.setdefault(second_name, []).append([x[0], v])
             else:
-                if x[1] not in names:
-                    raise ValueError("Invalid second name")
-                dic.setdefault(x[0],[]).append([x[1],1])
-                dic.setdefault(x[1],[]).append([x[0],1])
+          
+                dic.setdefault(x[0], []).append([x[1], 1])
+                dic.setdefault(x[1], []).append([x[0], 1])
+            #     # x[1] = second_name[0].strip()
+            #     # if x[1] not in names:
+            #     #     raise ValueError("invalid second name")
+            #     # # dic[x[0]] = [x[1],v]
+            #     # dic.setdefault(x[0],[]).append([x[1],v])
+            #     # dic.setdefault(x[1],[]).append([x[0],v])
+            # else:
+            #     if key_meta == "max_link_capacity":
+            #             v = int(val_meta)
+            #             if v < 0: raise ValueError("Capacity must be > 0")
+            #         else:
+            #             raise ValueError("Use [max_link_capacity=X]")
+            #     if x[1] not in names:
+            #         raise ValueError("Invalid second name")
+            #     dic.setdefault(node1, []).append([node2, v])
+            #     dic.setdefault(node2, []).append([node1, v])
+            #     # dic.setdefault(x[0],[]).append([x[1],1])
+            #     # dic.setdefault(x[1],[]).append([x[0],1])
+               
             # n+=1
+      
     except ValueError as e:
         print("Error",e)
         return False    
@@ -282,16 +314,26 @@ def check_validation():
     dic = make_a_dictionary()
     if dic["prefix_v"][0] > 0:
         print("Error")
-    nb_drones = dic["nb_drones"][0]
 
+    nb_drones = dic.get("nb_drones")
+
+    start_hub = dic.get("start_hub")
+    end_hub = dic.get("end_hub")
+    hub = dic.get("hub")
+    connection = dic.get("connection")
     try:
-        nb_drones = nb_drones.strip().replace('"','')
+        if not nb_drones or not start_hub or not end_hub or not hub or not connection:
+            raise ValueError("Enter key :)")
+        nb_drones = ''.join(dic["nb_drones"])
+        # nb_drones = nb_drones.strip().replace('"','')
         nb_drones = int(nb_drones)
         if nb_drones < 0:
             raise ValueError("Number must of nb_drones be positive")
     except ValueError as e:
         print("Error", e)
-    # print(dic["start_hub"])
+
+        sys.exit()
+    
     if len(dic["start_hub"]) > 1:
         print("You can't write start_hub more than one")
     if len(dic["nb_drones"]) > 1:
