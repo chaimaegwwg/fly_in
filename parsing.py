@@ -1,5 +1,67 @@
 import re
 import sys
+# . hia match l aye character wahed
+# ^kelema  awale kelema    or \A djdjfh
+# kelema$ fi a5ire nase or dkhfjkdh\Z
+#[^4] aye chi mnghire 4
+#[] 9eleb 3ela 
+#\[s\] bach ndire skip l []
+#\s  space 
+
+
+#[a-z] bine le a wl z
+
+#\w & \W
+#/w is  letter or digit or underscore
+#like saaed --> \waaed  this valid
+
+#\W      %rograming  \Wrograming 
+#\W lhewayeje l mokamala l W
+
+#\d & \D 
+#\d   decimal digit 0 - 9
+#\D matches any character that is not a digit aychi machi digit 
+
+#\s & \s
+#\s matches a single whitespace character like space newlin,tab , return 
+#\S Matches any character that is not a single whitespace character howa ayehaja machi s seghira
+
+
+#  + tafhase lharef 9eble mn + 3ele a9ale mbiine mera weheda like :
+# \W+ this atfhese aye haja 9eble wach 3ele a9ale mbine mera weheda
+
+
+
+# * mabine 0 tale malanihaya y9edere maykonch matalin haref heta mera like /w*
+
+# ? tafhase 0 yamera yebane like m?
+
+# {} mn l ach l ach atbane like programmming ---> program{2,}ing
+
+
+
+
+
+#re.findall(r'(\w+)\s*=\s*(\w+)'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def make_a_dictionary():
     dic = {}
     check_prefix = 0
@@ -9,13 +71,18 @@ def make_a_dictionary():
             line = line.split('#')[0].strip()
             if not line or ":" not in line:
                 if ":" not in line and line:
-                    check_prefix +=1
-                continue
+                    print("Enter key correctly")
+                    sys.exit()
             key , value= line.split(":", 1)
-            key = key.lower()
+            key = key.lower().strip()
             #prefix    
             if key != "start_hub" and key != "end_hub" and key != "hub" and key != "connection" and key != "nb_drones":
+                print("Enter key correctly")
                 check_prefix += 1
+                sys.exit()
+            if check_prefix > 1:
+                print("Enter key correctly")
+                sys.exit()
             if key in dic:
                 dic[key].append(value)
             else:
@@ -38,8 +105,12 @@ def check_connection(connection, names):
                 c1 = x[1].count("[")
                 if c1 != 1 or c != 1:
                     raise ValueError("Please check the [ ] if it correct")
+            
+                if not "=" in x[1] or x[1].count("=") != 1:
+                    raise ValueError("Please enter = between max_link_capacity and the value")
                 pairs = re.findall(r'(\w+)\s*=\s*(\w+)', x[1])
-                if len(pairs[0]) != 2:
+           
+                if not pairs or len(pairs[0]) != 2:
                     raise ValueError("enter like this the values max_link_capacity = value")
                 max_name = pairs[0][0].strip()
                 if max_name != "max_link_capacity":
@@ -58,7 +129,6 @@ def check_connection(connection, names):
             else:
                 if x[1] not in names:
                     raise ValueError("Invalid second name")
-                # dic[x[0]] = [x[1]]
                 dic.setdefault(x[0],[]).append([x[1],1])
                 dic.setdefault(x[1],[]).append([x[0],1])
             # n+=1
@@ -72,23 +142,30 @@ def check_connection(connection, names):
 
 def check_start_end(start_hub):
     all_arg = []
+    start_hub = " ".join(start_hub.replace("[", " [ ").replace("]", " ] ").split())
     arg = start_hub.split()
     lst_color = ["green", "yellow", "red", "blue", "gray"]
     lst_zones = ["restricted","normal","priority","blocked"]
     try:
         name = arg[0].strip().replace('"','')
+       
         if not name.isalpha():
             raise ValueError("please inter name as string :)")
         elif "-" in name:
             raise ValueError("Don't write dashes on the name is forbids :)")
         start = arg[1].strip().replace('"','')
         start = int(start)
-        # if start < 0:
-        #     raise ValueError("Number must be positive")
+        try:
+            if arg[3] and not "[" in arg[3]:
+                print(arg[3])
+                raise ValueError("Don't write after les coordonnées :)")
+        except ValueError as e:
+            print("Error", e)
+            sys.exit()
+        
         end = arg[2].strip().replace('"','')
         end = int(end)
-        # if start < 0:
-        #     raise ValueError("Number must of be positive")
+        
         if "[" not in start_hub and "]" not in start_hub or start_hub.count('[') > 1 or start_hub.count(']') > 1:
             raise ValueError("Please enter the form between [ ]")
         check = 0
@@ -119,7 +196,7 @@ def check_start_end(start_hub):
                 raise ValueError("Stop there")
 
     except ValueError as e:
-        print('\033[91m',"Error", e)
+        print('\033[91m',"Error",e,'\033[0m')
 def check_hub(lines):
     dic = make_a_dictionary()
     the_same_name = []
@@ -136,12 +213,17 @@ def check_hub(lines):
         
         try:
             parts = re.findall(r'[^ \[]+|\[[^\]]*\]', line)
+            if len(parts) > 4:
+                raise ValueError("Don't write any thing after  :)")
             if len(parts) < 3:
                 raise ValueError(f"Missing information in hub: {line}")
 
+
             name = parts[0].strip()
-            if "-" in name: raise ValueError("Don't write dashes on the name :)")
-            if name in the_same_name: raise ValueError("don't use the same name")
+            if "-" in name: 
+                raise ValueError("Don't write dashes on the name :)")
+            if name in the_same_name: 
+                raise ValueError("don't use the same name")
             the_same_name.append(name)
 
             hub_data = {
@@ -149,22 +231,28 @@ def check_hub(lines):
                 "position": (parts[1], parts[2]),
                 "zone": "normal", "color": "none", "max_drones": 1
             }
-
             if len(parts) > 3 and "[" in parts[3]:
+                if parts[3].count("[") > 1 or parts[3].count("]") > 1:
+                    raise ValueError("Inter just one like that [ ]")
                 meta_content = parts[3].strip("[]")
 
-       
-                if ":" in meta_content:
+                if ":" in meta_content :
                     raise ValueError(f"Invalid character ':' in metadata: [{meta_content}]")
+                if not "=" in meta_content:
+                    raise ValueError(f"please write = like that: data = value")
                 
                 pairs = re.findall(r'(\w+)\s*=\s*([\w-]+)', meta_content)
 
                 if meta_content.count('=') != len(pairs):
                     raise ValueError(f"Metadata syntax error in: [{meta_content}]. Check your '=' usage.")
-              
 
+                parsed_text = " ".join(f"{k}={v}" for k, v in pairs)
+                original = " ".join(meta_content.split())
+                if parsed_text != original:
+                    raise ValueError(f"Invalid metadata syntax: [ ... ] Please don't add something you don't need it")
                 for k, v in pairs:
-                    k, v = k.lower().strip(), v.lower().strip()
+                    k = k.lower().strip()
+                    v =  v.lower().strip()
                     if k == "zone":
                         if v not in ["priority", "normal", "blocked", "restricted"]:
                             raise ValueError("Invalid zone type")
@@ -173,17 +261,23 @@ def check_hub(lines):
                         hub_data["color"] = v
                     elif k == "max_drones":
                         v_int = int(v)
-                        if v_int <= 0: raise ValueError("max_drones must be > 0")
+                        if v_int <= 0:
+                            raise ValueError("max_drones must be > 0")
                         hub_data["max_drones"] = v_int
+                    else:
+                        raise ValueError("Please write one of this zone or color ...")
             
             dic_info[name] = hub_data
 
         except ValueError as e:
             print("Error", e)
             return False
-
     connection = check_connection(dic["connection"], the_same_name)
-    return (dic_info, connection) if connection else False
+    if connection:
+        return dic_info, connection
+    else:
+        return False
+
 def check_validation():
     dic = make_a_dictionary()
     if dic["prefix_v"][0] > 0:
@@ -197,6 +291,7 @@ def check_validation():
             raise ValueError("Number must of nb_drones be positive")
     except ValueError as e:
         print("Error", e)
+    # print(dic["start_hub"])
     if len(dic["start_hub"]) > 1:
         print("You can't write start_hub more than one")
     if len(dic["nb_drones"]) > 1:
