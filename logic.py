@@ -1,6 +1,6 @@
 from parsing import make_a_dictionary,check_hub
 import re
-
+import sys
 #mission is make 2 array and display the place 
 #mission tomorrow is for make sure for parsing also add attribuite like the cost 
 #mission make sure u understand the dijikstra and do it 
@@ -29,29 +29,35 @@ def display(grid, start , end):
                 print(" + ",end="")
             else:
                 print(" - ",end="")
-            
+ 
         print()
     
 def ft_info(info, start,end):
     start_row, start_col = start 
     end_row ,end_col = end
-    row_list = []
     grid = []
-    end_r = end_row +1
-    end_c = end_col+1
-    check = 0
-    for x in range(0, end_row + 1):
+    max_r = max(start_row, end_row)
+    max_c = max(start_col, end_col)
+    for key, value in info.items():
+        r, c = value["position"]
+        max_r = max(max_r, int(r))
+        max_c = max(max_c, int(c))
+    for x in range(0, max_r + 1):
         row_list = []
-        for y in range(0, end_col + 1):
-            step = Grid("anonymous",x,y)
+        for y in range(0, max_c + 1):
+            step = Grid("anonymous", x, y)
             row_list.append(step)
         grid.append(row_list)
   
-    grid[start_row][start_col].name = "start_hub"
-    grid[start_row][start_col].place = 0
-    grid[end_row][end_col].name = "start_end"
-    grid[end_row][end_col].place = 5
-    grid[end_row][end_col].zone = 5
+    try:
+        grid[start_row][start_col].name = "start_hub"
+        grid[start_row][start_col].place = 0
+        grid[end_row][end_col].name = "start_end"
+        grid[end_row][end_col].place = 5
+        grid[end_row][end_col].zone = 5
+    except IndexError:
+        # print(f"ERROR: Cannot access grid[{end_row}][{end_col}]. Max indices are [{max_r}][{max_c}]")
+        sys.exit()
     
     for key , value in info.items():
         row , col =value["position"]
@@ -90,7 +96,7 @@ def ft_info(info, start,end):
         grid[row][col].name = name
         grid[row][col].color = color
         grid[row][col].max_drones = max_drone
-    
+        
     return grid
 
 
@@ -152,6 +158,7 @@ def dijikstra(connection, info,grid):
         value = dic[name]
 
     if name == "goal":
+     
         route = []
         curr = "goal"
         while curr in path:
@@ -179,11 +186,9 @@ def main():
                 end = (int(d[1]),int(d[2]))
                 d = end 
     dic = make_a_dictionary()
-    # return end,start
     info,connection = check_hub(dic["hub"])
     info["hub"] = {"name": "hub", "position": v, "zone": "first", "max_drones": dic["nb_drones"]}
     info["goal"] = {"name": "goal", "position": d, "zone": "normal", "max_drones": dic["nb_drones"]}
-    # print(info)
     grid = ft_info(info, start,end)
     path = dijikstra(connection,info,grid)
     return info,connection,path
