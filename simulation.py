@@ -3,28 +3,50 @@ import sys
 import random
 from logic import main
 from parsing import check_validation
-#check later ila makanch nmber dyale drone wach ytele3e l path 
 class Zones:
-    def __init__(self,name,row,col,max_link_capacity=float('inf')):
-        self.name = name
-        self.x = int(col) * 50 + 25
-        self.y = int(row) * 50 + 25
-        self.max_link_capacity = max_link_capacity
-        self.current_drones = 0
+    def __init__(self, 
+                 name: str, 
+                 row: int | str, 
+                 col: int | str, 
+                 max_link_capacity: int | float
+                 ) -> None:
+        self.name: str = name
+        self.x: int = int(col) * 50 + 25
+        self.y: int = int(row) * 50 + 25
+        self.max_link_capacity: int | float = max_link_capacity
+        self.current_drones: int = 0
 class Drones:
-    def __init__(self,id,info,path,cap_zones):
-        self.id = id
-        self.cap_zones = cap_zones
-        self.path = path
-        self.info = info
-        self.step = 0
+    def __init__(self, 
+                 id: int, 
+                 info: dict[str, dict[str, Any]], 
+                 path: list[str], 
+                 cap_zones: dict[str, Any],  
+                 connection_data: dict[str, list[tuple[str, int | float]]]
+                 ) -> None:
+        self.id: int = id
+        self.connection_data: dict[str, list[tuple[str, int | float]]] = connection_data
+        self.cap_zones: dict[str, Any] = cap_zones
+        self.path: list[str] = path
+        self.info: dict[str, dict[str, Any]] = info
+        self.step: int = 0
 
-
-    def move(self):
+    def move(self) -> str | None: 
         if self.step + 1 < len(self.path):
             current_z = self.cap_zones[self.path[self.step]]
             next_z    = self.cap_zones[self.path[self.step + 1]]
-            if next_z.current_drones < next_z.max_link_capacity:
+
+            current_name = self.path[self.step]
+            next_name = self.path[self.step + 1]
+            if next_name == self.path[-1] or current_name == self.path[0]:
+                link_cap = float('inf')
+            else:
+                link_cap = 1
+                for neighbor in self.connection_data[current_name]:
+                    if neighbor[0] == next_name:
+                        link_cap = neighbor[1]
+                        break
+            
+            if next_z.current_drones < link_cap:
                 current_z.current_drones -= 1
                 next_z.current_drones    += 1
                 self.step += 1
@@ -35,7 +57,7 @@ class Drones:
                 return move_output
         return None
        
-def func():
+def func() -> None:
     info,connection,path = main()
     try:
         nb_drones = check_validation()
@@ -62,11 +84,8 @@ def func():
     zones = {}
     for name,data in info.items():
         x, y = data["position"]
-        max_drones = data.get("max_drones",float('inf'))
-        try:
-            max_cap = float(max_drones)
-        except:
-            max_cap = float('inf')
+        max_drones = data.get("max_drones",1)
+        max_cap = max_drones
         if name == path[0] or name == path[-1]:
             max_cap = float('inf')
         zones[name] = Zones(name,x,y,max_cap)
@@ -75,8 +94,7 @@ def func():
 
     all_drones = []
     for inde_x in range(nb_drones):
-        # speed = random.uniform(1.0, 2.5)
-        d = Drones(inde_x,info, path,zones)
+        d = Drones(inde_x,info, path,zones,connection)
         d.id = inde_x
         all_drones.append(d)
     running = True

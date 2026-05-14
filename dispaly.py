@@ -46,7 +46,7 @@ class Drones:
                         if neighbor[0] == next_name:
                             link_cap = neighbor[1]
                             break
-                # if next_z.current_drones < next_z.max_link_capacity:
+               
                 if next_z.current_drones < link_cap:
                         current_z.current_drones -= 1
                         next_z.current_drones    += 1
@@ -100,7 +100,7 @@ def func():
     for name,data in info.items():
         x, y = data["position"]
         max_drones = data.get("max_drones",1)
-        # print(name,max_drones)
+
         max_cap = max_drones
         if name == path[0] or name == path[-1]:
             max_cap = float('inf')
@@ -109,9 +109,19 @@ def func():
 
 
     all_drones = []
+    
     for inde_x in range(nb_drones):
-        speed = random.uniform(1.0, 2.5)
-        d = Drones(speed, drone_x + (inde_x * 10), drone_y, info, path,zones,connection)
+        if nb_drones < 40:
+            speed = random.uniform(1.0, 2.5)
+            d = Drones(speed, drone_x + (inde_x * 10), drone_y, info, path,zones,connection)
+        if nb_drones < 300:
+            speed = random.uniform(0.5, 1.5)
+            d = Drones(speed, drone_x + (inde_x * 1), drone_y, info, path,zones,connection)
+        else:
+            speed = random.uniform(0.6, 1.5)
+            d = Drones(speed, drone_x + inde_x, drone_y, info, path,zones,connection)
+
+    
         all_drones.append(d)
 
     running = True
